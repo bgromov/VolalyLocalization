@@ -1,0 +1,6 @@
+module dlib {
+    requires cplusplus11
+    umbrella "include/dlib"
+    link "lib/dlib"
+    export *
+}
