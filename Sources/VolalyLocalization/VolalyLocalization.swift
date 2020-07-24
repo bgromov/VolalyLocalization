@@ -4,7 +4,7 @@ import simd
 import CRelloc
 import Transform
 
-public func estimatePose(points: [simd_double3], rayOrigin: simd_double3, rays: [simd_double3], initialGuess: Transform) -> (fun: Double, x: Transform) {
+public func estimatePose(points: [simd_double3], rayOrigin: simd_double3, rays: [simd_double3], initialGuess: Transform, verbose: Bool = false) -> (fun: Double, x: Transform) {
     let count = points.count
     let p = points.flatMap { $0.flat }
     let qc = rayOrigin.flat
@@ -17,7 +17,7 @@ public func estimatePose(points: [simd_double3], rayOrigin: simd_double3, rays: 
 
     x.withUnsafeMutableBufferPointer {
         $0.baseAddress!.withMemoryRebound(to: (Double, Double, Double, Double).self, capacity: 1) { ptr in
-            residual = estimate_pose(count, p, qc, qv, ptr)
+            residual = estimate_pose(count, p, qc, qv, ptr, verbose ? 1 : 0)
         }
     }
 
@@ -26,10 +26,11 @@ public func estimatePose(points: [simd_double3], rayOrigin: simd_double3, rays: 
     return (fun: residual, x: estimate)
 }
 
-public func estimatePose(points: [simd_double3], rays: [Transform], initialGuess: Transform) -> (fun: Double, x: Transform) {
+public func estimatePose(points: [simd_double3], rays: [Transform], initialGuess: Transform, verbose: Bool = false) -> (fun: Double, x: Transform) {
 
     return estimatePose(points: points,
                  rayOrigin: rays[0].origin,
-                 rays: rays.flatMap { ($0 * simd_double3(1.0, 0.0, 0.0)) },
-                 initialGuess: initialGuess)
+                 rays: rays.map { $0 * simd_double3(1.0, 0.0, 0.0) },
+                 initialGuess: initialGuess,
+                 verbose: verbose)
 }

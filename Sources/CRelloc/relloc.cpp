@@ -77,7 +77,7 @@ namespace relloc {
         return err;
     }
 
-    double estimate_pose(const std::vector<point3d>& points, const point3d& qc, const std::vector<vector3d>& qv, column_vector& m)
+    double estimate_pose(const std::vector<point3d>& points, const point3d& qc, const std::vector<vector3d>& qv, column_vector& m, bool verbose = false)
     {
         double residual;
 
@@ -91,8 +91,10 @@ namespace relloc {
         auto stop_strategy = gradient_norm_stop_strategy(1e-5, 100);
 //        auto stop_strategy = objective_delta_stop_strategy(1e-9);
 
+        if (verbose) stop_strategy.be_verbose();
+
         return find_min_using_approximate_derivatives(bfgs_search_strategy(),
-                                                      stop_strategy.be_verbose(),
+                                                      stop_strategy,
                                                       mean_err, m, -1,
                                                       1.4901161193847656e-08);
 
@@ -123,14 +125,12 @@ void print_array(std::string msg, const double a[], size_t len)
 extern "C" {
 #endif
 
-double estimate_pose(size_t count, const double p[], const double qc[3], const double qv[], double (*x)[4])
+double estimate_pose(size_t count, const double p[], const double qc[3], const double qv[], double (*x)[4], int verbose_flag)
 {
     std::vector<relloc::point3d> _p;
     std::vector<relloc::vector3d> _qv;
     relloc::column_vector _x = dlib::mat((*x), 4);
     relloc::point3d _qc(qc[0], qc[1], qc[2]);
-
-//    cout << _x << endl;
 
     _p.reserve(count);
     _qv.reserve(count);
@@ -141,18 +141,22 @@ double estimate_pose(size_t count, const double p[], const double qc[3], const d
         _qv.push_back(relloc::vector3d(qv[i], qv[i+1], qv[i+2]));
     }
 
-//    print_array("p:\n", p, count * 3);
-//    print_array("qc:\n", qc, 3);
-//    print_array("qv:\n", qv, count * 3);
-//    print_array("x:\n", *x, 4);
+    if (verbose_flag)
+    {
+        print_array("p:\n", p, count * 3);
+        print_array("qc:\n", qc, 3);
+        print_array("qv:\n", qv, count * 3);
+        print_array("x:\n", *x, 4);
+    }
 
-    double res = relloc::estimate_pose(_p, _qc, _qv, _x);
-
-    cout << _x << endl;
+    double res = relloc::estimate_pose(_p, _qc, _qv, _x, (bool)verbose_flag);
 
     memcpy(x, &(_x.steal_memory()[0]), sizeof(*x));
 
-    print_array("new x:\n", *x, 4);
+    if (verbose_flag)
+    {
+        print_array("new x:\n", *x, 4);
+    }
 
     return res;
 }
