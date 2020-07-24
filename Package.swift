@@ -12,8 +12,7 @@ let package = Package(
     products: [
         .library(
             name: "VolalyLocalization",
-            type: .dynamic,
-            targets: ["CRelloc"])
+            targets: ["CRelloc", "VolalyLocalization"])
     ],
     dependencies: [
         .package(url: "https://github.com/bgromov/TransformSwift", from: "0.1.0"),
