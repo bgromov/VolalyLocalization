@@ -88,7 +88,7 @@ namespace relloc {
             return dlib::mean(dlib::mat(error_function(points, qc, qv, cur_estimate))) + std::max(0.0, dlib::length(pos) - 7.0);
         };
 
-        auto stop_strategy = gradient_norm_stop_strategy(1e-5);
+        auto stop_strategy = gradient_norm_stop_strategy(1e-5, 100);
 //        auto stop_strategy = objective_delta_stop_strategy(1e-9);
 
         return find_min_using_approximate_derivatives(bfgs_search_strategy(),
