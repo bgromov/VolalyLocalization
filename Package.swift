@@ -26,14 +26,14 @@ let package = Package(
         .target(
             name: "CRelloc",
             cxxSettings: [
-                .unsafeFlags(["-std=c++17", "-stdlib=libc++", "-ILibraries/dlib/include"]),
+                .headerSearchPath("../../Libraries/dlib/include")
             ],
             linkerSettings: [
-                .linkedLibrary("dlib"),
+                .linkedLibrary(":Libraries/dlib/lib/arm64/libdlib.a", .when(platforms: [.iOS])),
+                .linkedLibrary(":Libraries/dlib/lib/x86_64/libdlib.a", .when(platforms: [.macOS])),
                 .linkedFramework("Accelerate", .when(platforms: [.iOS, .macOS])),
-                .unsafeFlags(["-LLibraries/dlib/lib/arm64"], .when(platforms: [.iOS])),
-                .unsafeFlags(["-LLibraries/dlib/lib/x86_64"], .when(platforms: [.macOS])),
             ]
         ),
-    ]
+    ],
+    cxxLanguageStandard: .cxx1z
 )
