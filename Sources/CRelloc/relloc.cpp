@@ -55,7 +55,7 @@ namespace relloc {
         return std::acos(std::clamp(dot(v1_u, v2_u), -1.0, 1.0));
     }
 
-    std::vector<double> error_function(const std::vector<point3d>& points, const point3d& qc, const std::vector<vector3d>& qv, const column_vector& m)
+    std::vector<double> error_function(const std::vector<point3d>& points, const std::vector<point3d>& qc, const std::vector<vector3d>& qv, const column_vector& m)
     {
         const double tx   = m(0);
         const double ty   = m(1);
@@ -64,20 +64,25 @@ namespace relloc {
 
         point_transform_affine3d tf = make_transform(tx, ty, tz, rotz);
         std::vector<point3d> tp = transform_points(points, tf);
+        std::vector<point3d> new_ray;
+
+        std::transform(tp.begin(), tp.end(), qc.begin(), std::back_insert_iterator(new_ray),
+            [](const point3d& t, const point3d& q) -> const point3d
+            {
+                return t - q;
+            });
 
         std::vector<double> err;
-        std::transform(tp.begin(), tp.end(), qv.begin(), std::back_inserter(err),
-            [&](const point3d& pt, const vector3d& r) -> double
+        std::transform(new_ray.begin(), new_ray.end(), qv.begin(), std::back_inserter(err),
+            [&](const point3d& new_r, const vector3d& r) -> double
             {
-    //            vector3d x(1.0, 0.0, 0.0);
-    //            point3d  r = ray_tf(x);
-                return angle_between(r, pt - qc);
+                return angle_between(r, new_r);
             });
 
         return err;
     }
 
-    double estimate_pose(const std::vector<point3d>& points, const point3d& qc, const std::vector<vector3d>& qv, column_vector& m, bool verbose = false)
+    double estimate_pose(const std::vector<point3d>& points, const std::vector<point3d>& qc, const std::vector<vector3d>& qv, column_vector& m, bool verbose = false)
     {
         double residual;
 
@@ -109,6 +114,7 @@ namespace relloc {
     }
 }
 
+/// FIXME: Shrink output for very long arrays
 void print_array(std::string msg, const double a[], size_t len)
 {
     printf("%s", msg.c_str());
@@ -125,26 +131,29 @@ void print_array(std::string msg, const double a[], size_t len)
 extern "C" {
 #endif
 
-double estimate_pose(size_t count, const double p[], const double qc[3], const double qv[], double (*x)[4], int verbose_flag)
+double estimate_pose(size_t count, const double p[], const double qc[], const double qv[], double (*x)[4], int verbose_flag)
 {
     std::vector<relloc::point3d> _p;
+    std::vector<relloc::point3d> _qc;
     std::vector<relloc::vector3d> _qv;
+
     relloc::column_vector _x = dlib::mat((*x), 4);
-    relloc::point3d _qc(qc[0], qc[1], qc[2]);
 
     _p.reserve(count);
+    _qc.reserve(count);
     _qv.reserve(count);
 
     for (size_t i = 0; i < 3 * count; i += 3)
     {
         _p.push_back(relloc::point3d(p[i], p[i+1], p[i+2]));
+        _qc.push_back(relloc::point3d(qc[i], qc[i+1], qc[i+2]));
         _qv.push_back(relloc::vector3d(qv[i], qv[i+1], qv[i+2]));
     }
 
     if (verbose_flag)
     {
         print_array("p:\n", p, count * 3);
-        print_array("qc:\n", qc, 3);
+        print_array("qc:\n", qc, count * 3);
         print_array("qv:\n", qv, count * 3);
         print_array("x:\n", *x, 4);
     }

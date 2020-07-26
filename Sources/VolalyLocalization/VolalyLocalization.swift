@@ -4,10 +4,13 @@ import simd
 import CRelloc
 import Transform
 
-public func estimatePose(points: [simd_double3], rayOrigin: simd_double3, rays: [simd_double3], initialGuess: Transform, verbose: Bool = false) -> (fun: Double, x: Transform) {
+public func estimatePose(points: [simd_double3], rayOrigins: [simd_double3], rays: [simd_double3], initialGuess: Transform, verbose: Bool = false) -> (fun: Double, x: Transform) {
+    assert(rayOrigins.count == rays.count, "Number of rays and origins should be the same")
+    assert(points.count == rays.count, "Number of target points and rays should be the same")
+
     let count = points.count
     let p = points.flatMap { $0.flat }
-    let qc = rayOrigin.flat
+    let qc = rayOrigins.flatMap { $0.flat }
     let qv = rays.flatMap { $0.flat }
 
     var x: [Double] = initialGuess.origin.flat
@@ -27,9 +30,10 @@ public func estimatePose(points: [simd_double3], rayOrigin: simd_double3, rays: 
 }
 
 public func estimatePose(points: [simd_double3], rays: [Transform], initialGuess: Transform, verbose: Bool = false) -> (fun: Double, x: Transform) {
+    assert(points.count == rays.count, "Number of target points and rays should be the same")
 
     return estimatePose(points: points,
-                 rayOrigin: rays[0].origin,
+                 rayOrigins: rays.map { $0.origin },
                  rays: rays.map { $0 * simd_double3(1.0, 0.0, 0.0) },
                  initialGuess: initialGuess,
                  verbose: verbose)
