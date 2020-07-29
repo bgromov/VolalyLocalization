@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-double estimate_pose(size_t count, const double p[], const double qc[3], const double qv[], double (*x)[4], int verbose_flag);
+double estimate_pose(size_t count, const double p[], const double qc[3], const double qv[], double x[4], int verbose_flag);
 
 #ifdef __cplusplus
 }

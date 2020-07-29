@@ -114,12 +114,8 @@ final class CRellocTests: XCTestCase {
     }
 
     func testEstimatePose() {
-        var x: [Double] = [0, 0, 0, 0]
-        _ = x.withUnsafeMutableBufferPointer {
-            $0.baseAddress!.withMemoryRebound(to: (Double, Double, Double, Double).self, capacity: 1) { ptr in
-                estimate_pose(1, [0, -1, 0], [0, 0, 2], [2, 0, -2], ptr, 0)
-            }
-        }
+        var x: [Double] = [3, 0, 0, -.pi/2]
+        estimate_pose(1, [0, -1, 0], [0, 0, 2], [2, 0, -2], &x, 0)
     }
 
     static var allTests = [

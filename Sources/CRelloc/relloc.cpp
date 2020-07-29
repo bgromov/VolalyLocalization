@@ -184,13 +184,13 @@ void error_function(size_t count, const double p[], const double qc[], const dou
     memcpy(err, _err.data(), _err.size() * sizeof(double) * 3);
 }
 
-double estimate_pose(size_t count, const double p[], const double qc[], const double qv[], double (*x)[4], int verbose_flag)
+double estimate_pose(size_t count, const double p[], const double qc[], const double qv[], double x[4], int verbose_flag)
 {
     std::vector<relloc::point3d> _p;
     std::vector<relloc::point3d> _qc;
     std::vector<relloc::vector3d> _qv;
 
-    relloc::column_vector _x = dlib::mat((*x), 4);
+    relloc::column_vector _x = dlib::mat(x, 4);
 
     _p.reserve(count);
     _qc.reserve(count);
@@ -208,16 +208,16 @@ double estimate_pose(size_t count, const double p[], const double qc[], const do
         print_array("p:\n", p, count * 3);
         print_array("qc:\n", qc, count * 3);
         print_array("qv:\n", qv, count * 3);
-        print_array("x:\n", *x, 4);
+        print_array("x:\n", x, 4);
     }
 
     double res = relloc::estimate_pose(_p, _qc, _qv, _x, (bool)verbose_flag);
 
-    memcpy(x, &(_x.steal_memory()[0]), sizeof(*x));
+    memcpy(x, &(_x.steal_memory()[0]), sizeof(double) * 4);
 
     if (verbose_flag)
     {
-        print_array("new x:\n", *x, 4);
+        print_array("new x:\n", x, 4);
     }
 
     return res;

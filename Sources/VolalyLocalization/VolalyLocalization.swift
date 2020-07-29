@@ -19,11 +19,7 @@ public func estimatePose(points: [simd_double3], rayOrigins: [simd_double3], ray
 
     var residual: Double = 0.0
 
-    x.withUnsafeMutableBufferPointer {
-        $0.baseAddress!.withMemoryRebound(to: (Double, Double, Double, Double).self, capacity: 1) { ptr in
-            residual = estimate_pose(count, p, qc, qv, ptr, verbose ? 1 : 0)
-        }
-    }
+    residual = estimate_pose(count, p, qc, qv, &x, verbose ? 1 : 0)
 
     let estimate = Transform(simd_quatd(roll: 0.0, pitch: 0.0, yaw: x[3]), simd_double3(x[..<3]))
 
