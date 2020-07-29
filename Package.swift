@@ -38,7 +38,9 @@ let package = Package(
         ///
         /// Workaround: comment out .linkedLibraries above in CRelloc target.
 
-        //.testTarget(name: "CRellocTests", dependencies: ["CRelloc"]),
+        //.testTarget(name: "CRellocTests",
+        //            dependencies: ["CRelloc", "VolalyLocalization",
+        //                           .product(name: "Transform", package: "TransformSwift")]),
     ],
     cxxLanguageStandard: .cxx1z
 )
