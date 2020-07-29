@@ -1,5 +1,6 @@
 import Foundation
 import simd
+import Combine
 
 import CRelloc
 import Transform
@@ -37,4 +38,23 @@ public func estimatePose(points: [simd_double3], rays: [Transform], initialGuess
                  rays: rays.map { $0 * simd_double3(1.0, 0.0, 0.0) },
                  initialGuess: initialGuess,
                  verbose: verbose)
+}
+
+public func estimatePoseAsync(points: [simd_double3], rays: [Transform], initialGuess: Transform, verbose: Bool = false) -> Future<(fun: Double, x: Transform), Never>
+{
+    return Future { promise in
+        let res = estimatePose(points: points, rays: rays, initialGuess: initialGuess, verbose: verbose)
+
+        promise(.success(res))
+    }
+}
+
+public func estimatePoseAsync(points: [simd_double3], rays: [Transform], initialGuess: Transform, verbose: Bool = false, onComplete: @escaping ((fun: Double, x: Transform)) -> Void)
+{
+    DispatchQueue.global().async {
+        let res = estimatePose(points: points, rays: rays, initialGuess: initialGuess, verbose: verbose)
+        DispatchQueue.main.async {
+            onComplete(res)
+        }
+    }
 }
