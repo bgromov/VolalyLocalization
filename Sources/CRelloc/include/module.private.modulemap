@@ -1,0 +1,5 @@
+module CRelloc_Private {
+    header "relloc_private.h"
+
+    export *
+}

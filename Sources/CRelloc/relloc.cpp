@@ -1,5 +1,5 @@
 //
-//  File.cpp
+//  relloc.cpp
 //  
 //
 //  Created by Boris Gromov on 23.07.2020.
@@ -93,8 +93,8 @@ namespace relloc {
             return dlib::mean(dlib::mat(error_function(points, qc, qv, cur_estimate))) + std::max(0.0, dlib::length(pos) - 7.0);
         };
 
-        auto stop_strategy = gradient_norm_stop_strategy(1e-5, 100);
-//        auto stop_strategy = objective_delta_stop_strategy(1e-9);
+//        auto stop_strategy = gradient_norm_stop_strategy(1e-5, 100);
+        auto stop_strategy = objective_delta_stop_strategy(1e-9);
 
         if (verbose) stop_strategy.be_verbose();
 
@@ -130,6 +130,59 @@ void print_array(std::string msg, const double a[], size_t len)
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+double angle_between(const double v1[3], const double v2[3])
+{
+    relloc::vector3d _v1 = relloc::vector3d(v1[0], v1[1], v1[2]);
+    relloc::vector3d _v2 = relloc::vector3d(v2[0], v2[1], v2[2]);
+
+    relloc::vector3d v1_u = dlib::normalize(_v1);
+    relloc::vector3d v2_u = dlib::normalize(_v2);
+
+    return std::acos(std::clamp(dot(v1_u, v2_u), -1.0, 1.0));
+}
+
+void transform_points(size_t count, const double points[], const double tf[4], double* output) {
+    point_transform_affine3d transform = relloc::make_transform(tf[0], tf[1], tf[2], tf[3]);
+
+    std::vector<relloc::point3d> _p;
+    std::vector<relloc::point3d> _output;
+
+    _p.reserve(count);
+
+    for (size_t i = 0; i < 3 * count; i += 3)
+    {
+        _p.push_back(relloc::point3d(points[i], points[i+1], points[i+2]));
+    }
+
+    _output = relloc::transform_points(_p, transform);
+
+    memcpy(output, _output.data(), _output.size() * sizeof(double) * 3);
+}
+
+void error_function(size_t count, const double p[], const double qc[], const double qv[], const double x[4], double* err) {
+    std::vector<relloc::point3d> _p;
+    std::vector<relloc::point3d> _qc;
+    std::vector<relloc::vector3d> _qv;
+    std::vector<double> _err;
+
+    relloc::column_vector _x = dlib::mat(x, 4);
+
+    _p.reserve(count);
+    _qc.reserve(count);
+    _qv.reserve(count);
+
+    for (size_t i = 0; i < 3 * count; i += 3)
+    {
+        _p.push_back(relloc::point3d(p[i], p[i+1], p[i+2]));
+        _qc.push_back(relloc::point3d(qc[i], qc[i+1], qc[i+2]));
+        _qv.push_back(relloc::vector3d(qv[i], qv[i+1], qv[i+2]));
+    }
+
+    _err = std::move(relloc::error_function(_p, _qc, _qv, _x));
+
+    memcpy(err, _err.data(), _err.size() * sizeof(double) * 3);
+}
 
 double estimate_pose(size_t count, const double p[], const double qc[], const double qv[], double (*x)[4], int verbose_flag)
 {
