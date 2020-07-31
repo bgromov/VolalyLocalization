@@ -5,6 +5,35 @@ import Combine
 import CRelloc
 import Transform
 
+final public class VolalyLocalization {
+    @Published var estimationResult: (fun: Double, x: Transform)?
+
+    public init() {}
+
+    public func reset() {
+        estimationResult = nil
+    }
+
+    public var publisher: AnyPublisher<(fun: Double, x: Transform)?, Never> {
+        get {
+            return $estimationResult.eraseToAnyPublisher()
+        }
+    }
+
+    public func estimatePoseAsync(points: [simd_double3], rays: [Transform], initialGuess: Transform? = nil , verbose: Bool = false)
+    {
+        let x0: Transform = initialGuess ?? (estimationResult?.x ?? .identity)
+
+        DispatchQueue.global().async {
+            let res = estimatePose(points: points, rays: rays, initialGuess: x0, verbose: verbose)
+
+            DispatchQueue.main.async {
+                self.estimationResult = res
+            }
+        }
+    }
+}
+
 public func estimatePose(points: [simd_double3], rayOrigins: [simd_double3], rays: [simd_double3], initialGuess: Transform, verbose: Bool = false) -> (fun: Double, x: Transform) {
     assert(rayOrigins.count == rays.count, "Number of rays and origins should be the same")
     assert(points.count == rays.count, "Number of target points and rays should be the same")
