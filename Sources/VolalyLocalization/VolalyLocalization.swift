@@ -39,9 +39,11 @@ public func estimatePose(points: [simd_double3], rays: [Transform], initialGuess
 public func estimatePoseAsync(points: [simd_double3], rays: [Transform], initialGuess: Transform, verbose: Bool = false) -> Future<(fun: Double, x: Transform), Never>
 {
     return Future { promise in
-        let res = estimatePose(points: points, rays: rays, initialGuess: initialGuess, verbose: verbose)
+        DispatchQueue.global().async {
+            let res = estimatePose(points: points, rays: rays, initialGuess: initialGuess, verbose: verbose)
 
-        promise(.success(res))
+            promise(.success(res))
+        }
     }
 }
 
