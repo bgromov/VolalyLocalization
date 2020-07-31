@@ -31,7 +31,7 @@ public func estimatePose(points: [simd_double3], rays: [Transform], initialGuess
 
     return estimatePose(points: points,
                  rayOrigins: rays.map { $0.origin },
-                 rays: rays.map { $0 * simd_double3(1.0, 0.0, 0.0) },
+                 rays: rays.map { Transform($0.rotation) * simd_double3(1.0, 0.0, 0.0) },
                  initialGuess: initialGuess,
                  verbose: verbose)
 }
