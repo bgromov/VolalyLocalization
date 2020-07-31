@@ -121,7 +121,7 @@ void print_array(std::string msg, const double a[], size_t len)
 
     for (size_t i = 0; i < len; i++)
     {
-        printf("%7.3f ", a[i]);
+        printf("%7.3f, ", a[i]);
     }
 
     printf("\n");
