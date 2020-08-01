@@ -82,7 +82,7 @@ namespace relloc {
         return err;
     }
 
-    double estimate_pose(const std::vector<point3d>& points, const std::vector<point3d>& qc, const std::vector<vector3d>& qv, column_vector& m, bool verbose = false)
+    double estimate_pose(const std::vector<point3d>& points, const std::vector<point3d>& qc, const std::vector<vector3d>& qv, column_vector& m, const options_t& options)
     {
         double residual;
 
@@ -93,15 +93,32 @@ namespace relloc {
             return dlib::mean(dlib::mat(error_function(points, qc, qv, cur_estimate))) + std::max(0.0, dlib::length(pos) - 7.0);
         };
 
-//        auto stop_strategy = gradient_norm_stop_strategy(1e-5, 100);
-        auto stop_strategy = objective_delta_stop_strategy(1e-9);
+        auto stop_threshold = (options.stop_threshold == double()) ? 1e-7 : options.stop_threshold;
+        auto deriv_eps = 1.4901161193847656e-08;
 
-        if (verbose) stop_strategy.be_verbose();
+        if (options.stop_strategy == OBJECTIVE_DELTA) {
+            auto stop_strategy = objective_delta_stop_strategy(stop_threshold, options.max_iter);
 
-        return find_min_using_approximate_derivatives(bfgs_search_strategy(),
-                                                      stop_strategy,
-                                                      mean_err, m, -1,
-                                                      1.4901161193847656e-08);
+            if (options.verbose) stop_strategy.be_verbose();
+            residual = find_min_using_approximate_derivatives(bfgs_search_strategy(),   // search strategy
+                                                              stop_strategy,            // stop strategy
+                                                              mean_err,                 // objective function to minimize
+                                                              m,                        // initial / next solution
+                                                              -1,                       // stop, if objective function is less or equal
+                                                              deriv_eps);               // derivative epsilon
+        } else {
+            auto stop_strategy = gradient_norm_stop_strategy(stop_threshold, options.max_iter);
+
+            if (options.verbose) stop_strategy.be_verbose();
+            residual = find_min_using_approximate_derivatives(bfgs_search_strategy(),   // search strategy
+                                                              stop_strategy,            // stop strategy
+                                                              mean_err,                 // objective function to minimize
+                                                              m,                        // initial / next solution
+                                                              -1,                       // stop, if objective function is less or equal
+                                                              deriv_eps);               // derivative epsilon
+        }
+
+        return residual;
 
 //        auto res = find_min_global(mean_err,
 //                                   {-10.0, -10.0, -10.0, -M_PI},
@@ -184,7 +201,7 @@ void error_function(size_t count, const double p[], const double qc[], const dou
     memcpy(err, _err.data(), _err.size() * sizeof(double) * 3);
 }
 
-double estimate_pose(size_t count, const double p[], const double qc[], const double qv[], double x[4], int verbose_flag)
+double estimate_pose(size_t count, const double p[], const double qc[], const double qv[], double x[4], const options_t* options)
 {
     std::vector<relloc::point3d> _p;
     std::vector<relloc::point3d> _qc;
@@ -203,7 +220,7 @@ double estimate_pose(size_t count, const double p[], const double qc[], const do
         _qv.push_back(relloc::vector3d(qv[i], qv[i+1], qv[i+2]));
     }
 
-    if (verbose_flag)
+    if (options->verbose)
     {
         print_array("p:\n", p, count * 3);
         print_array("qc:\n", qc, count * 3);
@@ -211,11 +228,11 @@ double estimate_pose(size_t count, const double p[], const double qc[], const do
         print_array("x:\n", x, 4);
     }
 
-    double res = relloc::estimate_pose(_p, _qc, _qv, _x, (bool)verbose_flag);
+    double res = relloc::estimate_pose(_p, _qc, _qv, _x, *options);
 
     memcpy(x, &(_x.steal_memory()[0]), sizeof(double) * 4);
 
-    if (verbose_flag)
+    if (options->verbose)
     {
         print_array("new x:\n", x, 4);
     }

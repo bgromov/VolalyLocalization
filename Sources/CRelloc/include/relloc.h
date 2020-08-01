@@ -15,7 +15,17 @@
 extern "C" {
 #endif
 
-double estimate_pose(size_t count, const double p[], const double qc[3], const double qv[], double x[4], int verbose_flag);
+#define GRADIENT_NORM   (0)
+#define OBJECTIVE_DELTA (1)
+
+typedef struct {
+    uint8_t verbose;
+    uint8_t stop_strategy;
+    double stop_threshold;
+    unsigned long max_iter;
+} options_t;
+
+double estimate_pose(size_t count, const double p[], const double qc[3], const double qv[], double x[4], const options_t* options);
 
 #ifdef __cplusplus
 }
