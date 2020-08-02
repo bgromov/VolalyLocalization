@@ -26,8 +26,8 @@ let package = Package(
             linkerSettings: [
                 // These are not strictly needed in current implementation, as it seems
                 // all the functionality is available in headers
-                .linkedLibrary(":Libraries/dlib/lib/arm64/libdlib.a", .when(platforms: [.iOS])),
-                .linkedLibrary(":Libraries/dlib/lib/x86_64/libdlib.a", .when(platforms: [.macOS])),
+                //.linkedLibrary(":Libraries/dlib/lib/arm64/libdlib.a", .when(platforms: [.iOS])),
+                //.linkedLibrary(":Libraries/dlib/lib/x86_64/libdlib.a", .when(platforms: [.macOS])),
 
                 .linkedFramework("Accelerate", .when(platforms: [.iOS, .macOS])),
             ]
