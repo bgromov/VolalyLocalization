@@ -9,7 +9,7 @@ import Transform
 final public class RelativeLocalization {
     /// Estimation (optimization) stop strategy.
     /// Corresponds to Dlib stop strategies of BGFS optimization method.
-    public enum StopStrategy {
+    public enum StopStrategy: Hashable {
         /// Gradient norm stop strategy.
         ///   - `minNorm`: Stop when the gradient norm is less or equal to this value.
         ///   - `maxIterations`: Stop if this number of iterations exceeded.
